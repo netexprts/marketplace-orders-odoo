@@ -559,6 +559,8 @@ tr:hover{background:var(--green-l)}
 
 <script>
 const SHIP_COLS = ['x_studio_shipmenttrackingreference','x_studio_shipmentstatus','x_studio_shippingmethods'];
+const ANALYTIC_ACCOUNT_COL = 'Analytic Account';
+const ANALYTIC_ACCOUNT_VALUE = '119-الاسواق الالكترونية';
 
 // Unify every marketplace's raw shipment status text (English or Arabic) into one of 5 canonical Arabic labels.
 function unifyStatus(raw){
@@ -604,59 +606,61 @@ const PLATFORMS = {
   noon: {
     label:'NOON FBN', fileLabel:'NOON',
     headers:['Order Reference','Sales Team','Warehouse','carrier_id','Customer','Order Date',
-             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS],
-    consts:{sales_team:'NOON', warehouse:'4003-Noon FBN', carrier:'NOON', customer:'6991326922357'},
+             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS, ANALYTIC_ACCOUNT_COL],
+    consts:{sales_team:'NOON', warehouse:'4003-Noon FBN', carrier:'NOON', customer:'6991326922357', analyticAccount:ANALYTIC_ACCOUNT_VALUE},
     fields:{ orderId:'item_nr', sku:'partner_sku', price:'offer_price', qty:null, date:'order_timestamp',
              status:'status', tracking:'bayan_nr', channel:'fulfillment_model' },
     channelFn:noonChannel,
     stripSuffix:true, vatDivisor:1, priceIsLineTotal:false, cancelStatusValues:[],
-    cols:[{wch:22},{wch:12},{wch:18},{wch:12},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16}],
+    cols:[{wch:22},{wch:12},{wch:18},{wch:12},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16},{wch:22}],
     rules:[
       ['Order Reference','From <code>item_nr</code> after stripping the trailing <code>-N</code> suffix.'],
       ['Smart Aggregation','Same order + same <code>partner_sku</code> = single line with summed qty.'],
-      ['Multi-line Orders','First product line carries order metadata; subsequent lines leave order columns blank, shipment columns stay filled.'],
+      ['Multi-line Orders','First product line carries order metadata + tracking/status/shipping-method/Analytic Account; subsequent lines leave every column blank except Product, Quantity, and Price (so Odoo does not read them as new orders).'],
       ['Order Date','From <code>order_timestamp</code> formatted as <code>yyyy-mm-dd</code>.'],
       ['Unit Price','Taken directly from <code>offer_price</code>.'],
       ['Tracking Ref','<code>x_studio_shipmenttrackingreference</code> from <code>bayan_nr</code>.'],
       ['Shipment Status','<code>x_studio_shipmentstatus</code> unified from <code>status</code> into: تم التوصيل / قيد التنفيذ / ملغي / مرتجع / تالف.'],
       ['Shipping Method','<code>x_studio_shippingmethods</code> from <code>fulfillment_model</code> — known codes like FBN are extracted, others (e.g. Supermall) kept as-is.'],
+      ['Analytic Account','Constant <code>119-الاسواق الالكترونية</code> on the first line of each order only — blank on continuation lines.'],
       ['Constants','NOON · 4003-Noon FBN · NOON · 6991326922357'],
     ]
   },
   noonfbp: {
     label:'NOON FBP', fileLabel:'NOON FBP',
     headers:['Order Reference','Sales Team','Warehouse','carrier_id','Customer','Order Date',
-             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS],
-    consts:{sales_team:'NOON', warehouse:WH_AZIZIA, carrier:'NOON', customer:'6991326922357'},
+             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS, ANALYTIC_ACCOUNT_COL],
+    consts:{sales_team:'NOON', warehouse:WH_AZIZIA, carrier:'NOON', customer:'6991326922357', analyticAccount:ANALYTIC_ACCOUNT_VALUE},
     fields:{ orderId:'order_nr', sku:'partner_sku', price:'price', qty:null, date:'received_at',
              status:'status', tracking:'shipment_nr', channel:null },
     channelFn:()=>'FBP',
     stripSuffix:false, vatDivisor:1, priceIsLineTotal:false, cancelStatusValues:[],
-    cols:[{wch:22},{wch:12},{wch:18},{wch:12},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16}],
+    cols:[{wch:22},{wch:12},{wch:18},{wch:12},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16},{wch:22}],
     rules:[
       ['Order Reference','From <code>order_nr</code> as-is (this report has no line suffix to strip).'],
       ['Smart Aggregation','Same order + same <code>partner_sku</code> = single line; repeated item rows (split units) are summed as qty.'],
-      ['Multi-line Orders','First product line carries order metadata; subsequent lines leave order columns blank, shipment columns stay filled.'],
+      ['Multi-line Orders','First product line carries order metadata + tracking/status/shipping-method/Analytic Account; subsequent lines leave every column blank except Product, Quantity, and Price (so Odoo does not read them as new orders).'],
       ['Order Date','From <code>received_at</code> formatted as <code>yyyy-mm-dd</code>.'],
       ['Unit Price','Taken directly from <code>price</code>.'],
       ['Tracking Ref','<code>x_studio_shipmenttrackingreference</code> from <code>shipment_nr</code>.'],
       ['Shipment Status','<code>x_studio_shipmentstatus</code> unified from <code>status</code> into: تم التوصيل / قيد التنفيذ / ملغي / مرتجع / تالف.'],
       ['Shipping Method','<code>x_studio_shippingmethods</code> is always <code>FBP</code> for this report.'],
+      ['Analytic Account','Constant <code>119-الاسواق الالكترونية</code> on the first line of each order only — blank on continuation lines.'],
       ['Constants','NOON · 4001-مستودع العزيزية · NOON · 6991326922357'],
     ]
   },
   amazon:{
     label:'Amazon FBA', fileLabel:'Amazon',
     headers:['Order Reference','Sales Team','Warehouse','Customer','Order Date',
-             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS],
-    consts:{sales_team:'AMAZON', warehouse:WH_AMAZON_FBA, customer:'6991384765149'},
+             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS, ANALYTIC_ACCOUNT_COL],
+    consts:{sales_team:'AMAZON', warehouse:WH_AMAZON_FBA, customer:'6991384765149', analyticAccount:ANALYTIC_ACCOUNT_VALUE},
     fields:{ orderId:'amazon-order-id', sku:'sku', price:'item-price', qty:'quantity', date:'purchase-date',
              status:'order-status', tracking:null, channel:'fulfillment-channel' },
     channelFn:amazonChannel,
     warehouseFn:amazonWarehouse,
     stripSuffix:false, vatDivisor:1.15, priceIsLineTotal:true,
     cancelStatusValues:['Cancelled','Canceled'],
-    cols:[{wch:22},{wch:12},{wch:18},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16}],
+    cols:[{wch:22},{wch:12},{wch:18},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16},{wch:22}],
     rules:[
       ['Order Reference','From <code>amazon-order-id</code> as-is.'],
       ['Smart Aggregation','Same order + same <code>sku</code> = single line with summed <code>quantity</code>.'],
@@ -666,6 +670,7 @@ const PLATFORMS = {
       ['Tracking Ref','<code>x_studio_shipmenttrackingreference</code> — left blank (this report has no tracking number column).'],
       ['Shipment Status','<code>x_studio_shipmentstatus</code> unified from <code>order-status</code> into: تم التوصيل / قيد التنفيذ / ملغي / مرتجع / تالف.'],
       ['Shipping Method','<code>x_studio_shippingmethods</code> from <code>fulfillment-channel</code>: Amazon → FBA, Merchant → FBM.'],
+      ['Analytic Account','Constant <code>119-الاسواق الالكترونية</code> on the first line of each order only — blank on continuation lines.'],
       ['Warehouse','Merchant (FBM) orders → 4001-مستودع العزيزية. Amazon (FBA) orders → 4002-Amazon FBA.'],
       ['Constants','AMAZON · 6991384765149'],
     ]
@@ -676,13 +681,13 @@ const PLATFORMS = {
     // the real column headers are on row 2.
     headerRow:2,
     headers:['Order Reference','Sales Team','Warehouse','carrier_id','Customer','Order Date',
-             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS],
-    consts:{sales_team:'TRENDYOL', warehouse:WH_AZIZIA, customer:'6991326922357'},
+             'Order Lines/Product','Order Lines/Quantity','سعر الوحدة', ...SHIP_COLS, ANALYTIC_ACCOUNT_COL],
+    consts:{sales_team:'TRENDYOL', warehouse:WH_AZIZIA, customer:'6991326922357', analyticAccount:ANALYTIC_ACCOUNT_VALUE},
     fields:{ orderId:'رقم الطلبية', sku:'رمز المخزون', price:'مبلغ المبيعات', qty:'العدد', date:'تاريخ الطلبية',
              status:'حالة الطلبية', tracking:'رقم تتبع الشحنة', channel:null, carrier:'شركة الشحن' },
     channelFn:()=>'TRENDYOL',
     stripSuffix:false, vatDivisor:1, priceIsLineTotal:true, cancelStatusValues:[],
-    cols:[{wch:22},{wch:12},{wch:22},{wch:12},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16}],
+    cols:[{wch:22},{wch:12},{wch:22},{wch:12},{wch:18},{wch:14},{wch:22},{wch:14},{wch:14},{wch:22},{wch:16},{wch:16},{wch:22}],
     rules:[
       ['Order Reference','From <code>رقم الطلبية</code> as-is.'],
       ['Smart Aggregation','Same order + same <code>رمز المخزون</code> (SKU) = single line with summed <code>العدد</code>.'],
@@ -692,6 +697,7 @@ const PLATFORMS = {
       ['Tracking Ref','<code>x_studio_shipmenttrackingreference</code> from <code>رقم تتبع الشحنة</code>.'],
       ['Shipment Status','<code>x_studio_shipmentstatus</code> unified from <code>حالة الطلبية</code> (Arabic) into: تم التوصيل / قيد التنفيذ / ملغي / مرتجع / تالف. "لم يتم التسليم" (failed delivery) is treated as مرتجع.'],
       ['Shipping Method','<code>x_studio_shippingmethods</code> is always <code>TRENDYOL</code> for this report.'],
+      ['Analytic Account','Constant <code>119-الاسواق الالكترونية</code> on the first line of each order only — blank on continuation lines.'],
       ['Constants','TRENDYOL · 4001-مستودع العزيزية · 6991326922357'],
     ]
   }
@@ -888,8 +894,13 @@ function process(rows){
     .map(l=>({ref:l.ref, sku:l.sku, prices:[...l.prices].sort((a,b)=>a-b)}));
   const outRows = [cfg.headers];
   // Last 6 columns (product, qty, price, tracking ref, shipment status, shipping method) are
-  // line-level and always filled; only the leading order-level columns get blanked on continuation lines.
-  const blankCount = cfg.headers.length - 6;
+  // Trailing 7 columns (product, qty, price, tracking ref, shipment status, shipping method, analytic
+  // account) sit after the order-level columns. On a continuation line (2nd+ SKU of the same order),
+  // Odoo's importer treats ANY non-blank value outside sku/qty/price as the start of a brand-new order —
+  // so only product/qty/price may be filled there; everything else (order-level columns AND the ship/
+  // analytic columns) must be left blank.
+  const leadingBlankCount = cfg.headers.length - 7;
+  const trailingBlankCount = 4; // tracking ref, shipment status, shipping method, analytic account
   for(const ref of refsOrder){
     const sub = lines.filter(l=>l.ref===ref);
     let first = true;
@@ -901,15 +912,16 @@ function process(rows){
         if(hasCarrierCol){
           const carrier = cfg.consts.carrier || refCarrier.get(ref) || '';
           outRows.push([ref, cfg.consts.sales_team, warehouse, carrier,
-                        cfg.consts.customer, refDate.get(ref)||'', l.sku, l.qty, l.firstPrice, ...shipVals]);
+                        cfg.consts.customer, refDate.get(ref)||'', l.sku, l.qty, l.firstPrice, ...shipVals, cfg.consts.analyticAccount]);
         } else {
           outRows.push([ref, cfg.consts.sales_team, warehouse,
-                        cfg.consts.customer, refDate.get(ref)||'', l.sku, l.qty, l.firstPrice, ...shipVals]);
+                        cfg.consts.customer, refDate.get(ref)||'', l.sku, l.qty, l.firstPrice, ...shipVals, cfg.consts.analyticAccount]);
         }
         first = false;
       } else {
-        const blanks = Array(blankCount).fill('');
-        outRows.push([...blanks, l.sku, l.qty, l.firstPrice, ...shipVals]);
+        const leadingBlanks = Array(leadingBlankCount).fill('');
+        const trailingBlanks = Array(trailingBlankCount).fill('');
+        outRows.push([...leadingBlanks, l.sku, l.qty, l.firstPrice, ...trailingBlanks]);
       }
     }
   }
